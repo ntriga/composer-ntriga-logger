@@ -1,0 +1,22 @@
+{
+    "name": "ntriga/logger",
+    "description": "Logger module",
+    "type": "package",
+    "require": {
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ntriga.Agency",
+            "email": "support@ntriga.agency"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Ntriga\\": "src/"
+        }
+    },
+    "version": "1.0.0",
+    "minimum-stability": "dev"
+}
