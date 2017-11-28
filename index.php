@@ -1,4 +1,5 @@
 <?php
+
 use Ntriga\Logger;
 
 require __DIR__ . '/vendor/autoload.php';
@@ -7,7 +8,7 @@ require __DIR__ . '/vendor/autoload.php';
 $logger = new Logger();
 
 // log
-$resp = $logger->addDebug(
+$resp = $logger->warning(
 	'front',
 	'title',
 	'description'

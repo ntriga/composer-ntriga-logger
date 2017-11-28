@@ -1,4 +1,5 @@
 <?php
+
 namespace Ntriga;
 
 use GuzzleHttp\Client;
@@ -12,8 +13,9 @@ class Logger
 	public function __construct($domain = null)
 	{
 		// reset domain ?
-		if ($domain === null) {
-			$domain = isset($_SERVER['HTTP_HOST']) ? (string) $_SERVER['HTTP_HOST'] : '';
+		$this->domain = (string) $domain;
+		if (empty($this->domain)) {
+			$this->domain = isset($_SERVER['HTTP_HOST']) ? (string) $_SERVER['HTTP_HOST'] : '';
 		}
 
 		// init guzzle
@@ -50,35 +52,35 @@ class Logger
 		return $ret;
 	}
 
-	public function addAlert($category, $title, $description = null)
+	public function alert($category, $title, $description = null)
 	{
 		return $this->log($category, 'alert', $title, $description);
 	}
-	public function addCritical($category, $title, $description = null)
+	public function critical($category, $title, $description = null)
 	{
 		return $this->log($category, 'critical', $title, $description);
 	}
-	public function addDebug($category, $title, $description = null)
+	public function debug($category, $title, $description = null)
 	{
 		return $this->log($category, 'debug', $title, $description);
 	}
-	public function addEmergency($category, $title, $description = null)
+	public function emergency($category, $title, $description = null)
 	{
 		return $this->log($category, 'emergency', $title, $description);
 	}
-	public function addError($category, $title, $description = null)
+	public function error($category, $title, $description = null)
 	{
 		return $this->log($category, 'error', $title, $description);
 	}
-	public function addInfo($category, $title, $description = null)
+	public function info($category, $title, $description = null)
 	{
 		return $this->log($category, 'info', $title, $description);
 	}
-	public function addNotice($category, $title, $description = null)
+	public function notice($category, $title, $description = null)
 	{
 		return $this->log($category, 'notice', $title, $description);
 	}
-	public function addWarning($category, $title, $description = null)
+	public function warning($category, $title, $description = null)
 	{
 		return $this->log($category, 'warning', $title, $description);
 	}
