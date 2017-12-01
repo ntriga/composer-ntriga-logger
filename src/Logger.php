@@ -7,7 +7,7 @@ use GuzzleHttp\Client;
 class Logger
 {
 	private $domain;
-	private $endpoint = 'http://datajanebe.dev/api/log';
+	private $endpoint;
 	private $guzzle;
 
 	public function __construct($domain = null)
@@ -18,11 +18,17 @@ class Logger
 			$this->domain = isset($_SERVER['HTTP_HOST']) ? (string) $_SERVER['HTTP_HOST'] : '';
 		}
 
+		// set endpoint
+		$this->endpoint = (
+			isset($_SERVER['HTTP_HOST']) &&
+			preg_match('/\.dev$/', $_SERVER['HTTP_HOST'])
+		) ? 'http://datajanebe.dev/api/log' : 'http://logger.datajane.be/api/log';
+
 		// init guzzle
 		$this->guzzle = new Client();
 	}
 
-	public function log($category, $type, $title, $description = null)
+	public function log($category, $type, $title, $description = null, array $extra = array())
 	{
 		// post
 		$resp = $this->guzzle->request(
@@ -35,6 +41,7 @@ class Logger
 					'type' => (string) $type,
 					'title' => (string) $title,
 					'description' => (string) $description,
+					'extra' => $extra,
 				]
 			]
 		);
@@ -52,36 +59,36 @@ class Logger
 		return $ret;
 	}
 
-	public function alert($category, $title, $description = null)
+	public function alert($category, $title, $description = null, array $extra = array())
 	{
-		return $this->log($category, 'alert', $title, $description);
+		return $this->log($category, 'alert', $title, $description, $extra);
 	}
-	public function critical($category, $title, $description = null)
+	public function critical($category, $title, $description = null, array $extra = array())
 	{
-		return $this->log($category, 'critical', $title, $description);
+		return $this->log($category, 'critical', $title, $description, $extra);
 	}
-	public function debug($category, $title, $description = null)
+	public function debug($category, $title, $description = null, array $extra = array())
 	{
-		return $this->log($category, 'debug', $title, $description);
+		return $this->log($category, 'debug', $title, $description, $extra);
 	}
-	public function emergency($category, $title, $description = null)
+	public function emergency($category, $title, $description = null, array $extra = array())
 	{
-		return $this->log($category, 'emergency', $title, $description);
+		return $this->log($category, 'emergency', $title, $description, $extra);
 	}
-	public function error($category, $title, $description = null)
+	public function error($category, $title, $description = null, array $extra = array())
 	{
-		return $this->log($category, 'error', $title, $description);
+		return $this->log($category, 'error', $title, $description, $extra);
 	}
-	public function info($category, $title, $description = null)
+	public function info($category, $title, $description = null, array $extra = array())
 	{
-		return $this->log($category, 'info', $title, $description);
+		return $this->log($category, 'info', $title, $description, $extra);
 	}
-	public function notice($category, $title, $description = null)
+	public function notice($category, $title, $description = null, array $extra = array())
 	{
-		return $this->log($category, 'notice', $title, $description);
+		return $this->log($category, 'notice', $title, $description, $extra);
 	}
-	public function warning($category, $title, $description = null)
+	public function warning($category, $title, $description = null, array $extra = array())
 	{
-		return $this->log($category, 'warning', $title, $description);
+		return $this->log($category, 'warning', $title, $description, $extra);
 	}
 }
