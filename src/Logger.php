@@ -42,7 +42,8 @@ class Logger
 					'title' => (string) $title,
 					'description' => (string) $description,
 					'extra' => $extra,
-				]
+				],
+				'timeout' => 2,
 			]
 		);
 
