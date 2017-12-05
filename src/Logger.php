@@ -10,17 +10,6 @@ use Symfony\Component\Finder\Finder;
 
 class Logger
 {
-	private $domain;
-
-	public function __construct($domain = null)
-	{
-		// reset domain ?
-		$this->domain = (string) $domain;
-		if (empty($this->domain)) {
-			$this->domain = isset($_SERVER['HTTP_HOST']) ? (string) $_SERVER['HTTP_HOST'] : '';
-		}
-	}
-
 	private function getLogFiles()
 	{
 		$items = array();
@@ -72,7 +61,7 @@ class Logger
 		date_default_timezone_set('Europe/Brussels');
 
 		// init monolog
-		$monolog = new MonologLogger($this->domain);
+		$monolog = new MonologLogger($type);
 
 		// log file
 		$dateFormat = 'Y-m-d H:i:s';
@@ -117,13 +106,19 @@ class Logger
 		);
 	}
 
-	public function synch()
+	public function synch($domain = null)
 	{
 		// get files to synch
 		$files = $this->getLogFiles();
 
 		// validate
 		if (empty($files)) return;
+
+		// set domain
+		$domain = (string) $domain;
+		if (empty($domain)) {
+			$domain = isset($_SERVER['HTTP_HOST']) ? (string) $_SERVER['HTTP_HOST'] : '';
+		}
 
 		// set endpoint
 		$endpoint = (
@@ -147,7 +142,7 @@ class Logger
 				$endpoint . '/synch',
 				array(
 					'query' => array(
-						'domain' => $this->domain,
+						'domain' => $domain,
 						'type' => $type,
 					),
 					'multipart' => array(
