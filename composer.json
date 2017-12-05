@@ -4,8 +4,8 @@
     "type": "package",
     "require": {
         "guzzlehttp/guzzle": "^6.3",
-        "monolog/monolog": "1.x-dev",
-        "symfony/finder": "3.4.x-dev"
+        "monolog/monolog": "~1.12",
+        "symfony/finder": "~3.3"
     },
     "license": "MIT",
     "authors": [
