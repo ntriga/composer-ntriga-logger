@@ -3,12 +3,14 @@
 namespace Ntriga;
 
 use GuzzleHttp\Client;
+use Monolog\Logger as MonologLogger;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Handler\StreamHandler;
+use Symfony\Component\Finder\Finder;
 
 class Logger
 {
 	private $domain;
-	private $endpoint;
-	private $guzzle;
 
 	public function __construct($domain = null)
 	{
@@ -17,47 +19,148 @@ class Logger
 		if (empty($this->domain)) {
 			$this->domain = isset($_SERVER['HTTP_HOST']) ? (string) $_SERVER['HTTP_HOST'] : '';
 		}
+	}
+
+	private function getLogFiles()
+	{
+		$items = array();
+		$finder = new Finder();
+
+		foreach ($finder->in($this->getLogPath())->files()->name('*.log') as $file) {
+			$items[] = array(
+				'path' => $file->getRealPath(),
+				'delete' => ( filemtime($file->getRealPath()) < strtotime('today 00:00')),
+			);
+		}
+
+		return $items;
+	}
+
+	private function getLogPath()
+	{
+		return __DIR__ . '/../logs/';
+	}
+
+	public function log($category, $type, $title, $description = null, array $extra = array())
+	{
+		// redefine
+		$category = (string) $category;
+		$type = (string) $type;
+		$title = (string) $title;
+		$description = (string) $description;
+
+		// validate $type
+		switch ($type) {
+			case 'alert';
+			case 'critical';
+			case 'emergency':
+			case 'error':
+			case 'info':
+			case 'notice':
+			case 'warning':
+				break;
+
+			default:
+				$type = 'debug';
+				break;
+		}
+
+		// init monolog
+		$monolog = new MonologLogger($this->domain);
+
+		// log file
+		$dateFormat = 'Y-m-d H:i:s';
+		$output = "[%datetime%] %context%\n";
+		$formatter = new LineFormatter($output, $dateFormat);
+
+		$logfile = $this->getLogPath() .
+					$type . '/' .
+					date('Ymd') . '.log'
+					;
+
+		// create handler
+		$stream = new StreamHandler($logfile);
+
+		// set formatter
+		$stream->setFormatter($formatter);
+
+		// add handler
+		$monolog->pushHandler($stream);
+
+		// set params
+		$params = array(
+			'title' => $title,
+			'category' => $category,
+			'description' => $description,
+			'extra' => $extra,
+		);
+
+		// log
+		$monolog->$type(
+			null, $params
+		);
+
+		// return
+		return array(
+			'success' => true,
+			'logfile' => $logfile,
+			'data' => $params,
+		);
+	}
+
+	public function synch()
+	{
+		// get files to synch
+		$files = $this->getLogFiles();
+
+		// validate
+		if (empty($files)) return;
 
 		// set endpoint
-		$this->endpoint = (
+		$endpoint = (
 			isset($_SERVER['HTTP_HOST']) &&
 			preg_match('/\.dev$/', $_SERVER['HTTP_HOST'])
 		) ? 'http://datajanebe.dev/api/log' : 'http://logger.datajane.be/api/log';
 
 		// init guzzle
-		$this->guzzle = new Client();
-	}
+		$guzzle = new Client();
 
-	public function log($category, $type, $title, $description = null, array $extra = array())
-	{
-		// post
-		$resp = $this->guzzle->request(
-			'POST',
-			$this->endpoint . '/add',
-			[
-				'form_params' => [
-					'domain' => $this->domain,
-					'category' => (string) $category,
-					'type' => (string) $type,
-					'title' => (string) $title,
-					'description' => (string) $description,
-					'extra' => $extra,
-				],
-				'timeout' => 2,
-			]
-		);
+		// iterate through files and post them one by one
+		// we cannot give GET params per file, so we need to make a seperate call for each file
+		foreach ($files as &$file) {
+			// get type, filename
+			$_file = explode('/', $file['path']);
+			$filename = array_pop($_file);
+			$type = array_pop($_file);
 
-		// set return var
-		$ret = ['success' => false, 'data' => []];
+			$resp = $guzzle->request(
+				'POST',
+				$endpoint . '/synch',
+				array(
+					'query' => array(
+						'domain' => $this->domain,
+						'type' => $type,
+					),
+					'multipart' => array(
+						array(
+							'name' => 'logfile',
+							'filename' => $filename,
+							'contents' => fopen($file['path'], 'r'),
+						)
+					),
+				)
+			);
 
-		// reset return var ?
-		if ( $resp->getStatusCode() == 200 ) {
-			$ret['success'] = true;
-			$ret['data'] = @json_decode($resp->getBody()->getContents(), true);
+			$file['processed'] = ($resp->getStatusCode() == 200);
+
+			// delete file ?
+			if ($file['processed'] && (bool) $file['delete']) {
+				@unlink($file['path']);
+			}
 		}
 
 		// return
-		return $ret;
+		return $files;
 	}
 
 	public function alert($category, $title, $description = null, array $extra = array())
