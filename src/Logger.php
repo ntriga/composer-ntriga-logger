@@ -65,6 +65,12 @@ class Logger
 				break;
 		}
 
+		// set current timezone
+		$timezone = date_default_timezone_get();
+
+		// overwrite it to "our" timezone
+		date_default_timezone_set('Europe/Brussels');
+
 		// init monolog
 		$monolog = new MonologLogger($this->domain);
 
@@ -99,6 +105,9 @@ class Logger
 		$monolog->$type(
 			null, $params
 		);
+
+		// reset timezone
+		date_default_timezone_set($timezone);
 
 		// return
 		return array(
